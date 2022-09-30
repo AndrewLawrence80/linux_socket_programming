@@ -6,8 +6,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#define PORT 28000
-#define SIZE_LISTEN_QUEUE 8
+#define PORT 8000
+#define SIZE_LISTEN_QUEUE 1
 #define SIZE_BUFFER 1024
 int main()
 {
@@ -38,7 +38,7 @@ int main()
     bzero(&server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server_addr.sin_port = PORT;
+    server_addr.sin_port = htons(PORT);
 
     // bind server address to socket file descriptor
     if (bind(server_sockfd, (const struct sockaddr *)&server_addr, (socklen_t)sizeof(server_addr)) < 0)
@@ -55,39 +55,56 @@ int main()
     }
 
     socklen_t socklen_client_addr = (socklen_t)sizeof(client_addr);
-    client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_addr, &socklen_client_addr);
-    if (client_sockfd < 0)
+    while (true)
     {
-        perror("error when accepting connection");
-        exit(EXIT_FAILURE);
-    }
-    printf("get connection from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohl(client_addr.sin_port));
-    if (client_sockfd < 0)
-    {
-        perror("error when accepting connection");
-        exit(EXIT_FAILURE);
-    }
-
-    char buffer[SIZE_BUFFER] = {0};
-    ssize_t val_recv = recv(client_sockfd, buffer, SIZE_BUFFER, 0);
-    if (val_recv < 0)
-    {
-        perror("error when receiving from client");
-        exit(EXIT_FAILURE);
-    }
-    while (val_recv)
-    {
-        printf("%s\n", buffer);
-        const char *msg = "A message from server";
-        ssize_t val_send = send(client_sockfd, msg, sizeof(msg), 0);
-        if (val_send < 0)
+        client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_addr, &socklen_client_addr);
+        if (client_sockfd < 0)
         {
-            perror("loss connection to client");
-            close(client_sockfd);
+            perror("error when accepting connection");
+            exit(EXIT_FAILURE);
         }
-        val_recv = recv(client_sockfd, buffer, SIZE_BUFFER, 0);
-    }
-    close(client_sockfd);
+        printf("get connection from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+        if (client_sockfd < 0)
+        {
+            perror("error when accepting connection");
+            exit(EXIT_FAILURE);
+        }
 
+        // create child process to handle connection
+        int child_pid = fork();
+        if (child_pid < 0)
+        {
+            perror("error when creating child process to handle connection");
+            exit(EXIT_FAILURE);
+        }
+        else if (child_pid == 0)
+        {
+            // prevent leak
+            close(server_sockfd);
+            char buffer[SIZE_BUFFER] = {0};
+            ssize_t val_recv = recv(client_sockfd, buffer, SIZE_BUFFER, 0);
+            if (val_recv < 0)
+            {
+                perror("error when receiving from client");
+                exit(EXIT_FAILURE);
+            }
+            while (val_recv)
+            {
+                printf("%s\n", buffer);
+                const char *msg = "A message from server";
+                ssize_t val_send = send(client_sockfd, msg, strlen(msg) * sizeof(char), 0);
+                if (val_send < 0)
+                {
+                    perror("loss connection to client");
+                    close(client_sockfd);
+                }
+                val_recv = recv(client_sockfd, buffer, SIZE_BUFFER, 0);
+            }
+            close(client_sockfd);
+            exit(EXIT_SUCCESS);
+        }
+        close(client_sockfd);
+    }
+    close(server_sockfd);
     return 0;
 }

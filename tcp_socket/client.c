@@ -11,13 +11,13 @@ int main(int argc, const char *argv[])
 {
     int client_sockfd = -1;
     struct sockaddr_in server_addr;
-    // if (argc != 3)
-    // {
-    //     perror("error when parsing server address and port ");
-    //     exit(EXIT_FAILURE);
-    // }
-    const char *SERVER_IP = "localhost";
-    const int SERVER_PORT = 28000;
+    if (argc != 3)
+    {
+        perror("error when parsing server address and port ");
+        exit(EXIT_FAILURE);
+    }
+    const char *SERVER_IP = argv[1];
+    const int SERVER_PORT = atoi(argv[2]);
     client_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (client_sockfd < 0)
     {
@@ -41,11 +41,10 @@ int main(int argc, const char *argv[])
     }
     char buffer[SIZE_BUFFER] = {0};
     const char *msg = "A message from client";
-    int val_send = send(client_sockfd, msg, sizeof(msg), 0);
+    int val_send = send(client_sockfd, msg, strlen(msg) * sizeof(char), 0);
     if (val_send < 0)
     {
-        perror("error when sending to server");
-        exit(EXIT_FAILURE);
+        perror("loss connection to server");
     }
     while (val_send)
     {
@@ -53,11 +52,10 @@ int main(int argc, const char *argv[])
         if (val_recv < 0)
         {
             perror("loss connection to server");
-            exit(EXIT_FAILURE);
         }
         printf("%s\n", buffer);
-        sleep(1);
-        val_send = send(client_sockfd, msg, sizeof(msg), 0);
+        usleep(50000);
+        val_send = send(client_sockfd, msg, strlen(msg) * sizeof(char), 0);
     }
     close(client_sockfd);
     return 0;
