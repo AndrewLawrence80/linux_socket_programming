@@ -11,13 +11,13 @@ int main(int argc, const char *argv[])
 {
     int client_sockfd = -1;
     struct sockaddr_in server_addr;
-    // if (argc != 3)
-    // {
-    //     perror("error when parsing server address and port ");
-    //     exit(EXIT_FAILURE);
-    // }
-    const char *SERVER_IP = "127.0.0.1";
-    const int SERVER_PORT = 8000;
+    if (argc != 3)
+    {
+        perror("error when parsing server address and port ");
+        exit(EXIT_FAILURE);
+    }
+    const char *SERVER_IP = argv[1];
+    const int SERVER_PORT = atoi(argv[2]);
     client_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (client_sockfd < 0)
     {
@@ -40,7 +40,7 @@ int main(int argc, const char *argv[])
     const char *msg = "A message from client";
     while (true)
     {
-        val_send = sendto(client_sockfd, msg, strlen(msg) * sizeof(char), MSG_CONFIRM, (const struct sockaddr *)&server_addr, socklen_server_addr);
+        val_send = sendto(client_sockfd, msg, strlen(msg) * sizeof(char), 0, (const struct sockaddr *)&server_addr, socklen_server_addr);
         if (val_send < 0)
         {
             perror("error when sending to server");
@@ -52,7 +52,7 @@ int main(int argc, const char *argv[])
             perror("error when receiving from server");
             exit(EXIT_FAILURE);
         }
-        printf("%s\n",buffer);
+        printf("%s\n", buffer);
         sleep(1);
     }
     return 0;

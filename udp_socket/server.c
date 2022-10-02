@@ -25,12 +25,12 @@ int main()
 
     // optional
     // set socket option
-    // int optval = 1;
-    // if (setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, (const void *)&optval, (socklen_t)sizeof(optval)) < 0)
-    // {
-    //     perror("error when setting socket option");
-    //     exit(EXIT_FAILURE);
-    // }
+    int optval = 1;
+    if (setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, (const void *)&optval, (socklen_t)sizeof(optval)) < 0)
+    {
+        perror("error when setting socket option");
+        exit(EXIT_FAILURE);
+    }
 
     bzero(&server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
@@ -49,7 +49,7 @@ int main()
     socklen_t socklen_client_addr = (socklen_t)sizeof(client_addr);
     while (true)
     {
-        val_recv = recvfrom(server_sockfd, buffer, SIZE_BUFFER, MSG_WAITALL, (struct sockaddr *)&client_addr, (socklen_t *)&socklen_client_addr);
+        val_recv = recvfrom(server_sockfd, buffer, SIZE_BUFFER, 0, (struct sockaddr *)&client_addr, (socklen_t *)&socklen_client_addr);
         if (val_recv < 0)
         {
             perror("error when receiving from client");
@@ -57,7 +57,7 @@ int main()
         }
         printf("received msg from client %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
         printf("%s\n", buffer);
-        val_send = sendto(server_sockfd, msg, strlen(msg) * sizeof(char), MSG_CONFIRM, (const struct sockaddr *)&client_addr, socklen_client_addr);
+        val_send = sendto(server_sockfd, msg, strlen(msg) * sizeof(char), 0, (const struct sockaddr *)&client_addr, socklen_client_addr);
         if (val_send < 0)
         {
             perror("error when sending to client");
