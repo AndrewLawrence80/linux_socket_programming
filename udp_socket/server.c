@@ -16,7 +16,7 @@ int main()
 
     // create socket
     // SOCK_DGRAM denotes UDP
-    server_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    server_sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (server_sockfd < 0)
     {
         perror("error when creating socket");

@@ -18,7 +18,7 @@ int main(int argc, const char *argv[])
     }
     const char *SERVER_IP = argv[1];
     const int SERVER_PORT = atoi(argv[2]);
-    client_sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    client_sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (client_sockfd < 0)
     {
         perror("error when creating socket");
